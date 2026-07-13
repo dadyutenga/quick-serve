@@ -30,3 +30,6 @@ Thumbs.db
 
 # Go
 vendor/
+
+# Docker local overrides
+docker-compose.override.yml

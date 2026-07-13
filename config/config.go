@@ -97,6 +97,6 @@ func (c *Config) SiteURL(name string) string {
 			return scheme + "://" + name + "." + c.BaseDomain
 		}
 	}
-	// Development: path-based or host:port with subdomain simulation
-	return "http://localhost:" + c.Port + "/s/" + name
+	// Development: path-based; trailing slash so relative CSS/JS resolve under the site
+	return "http://localhost:" + c.Port + "/s/" + name + "/"
 }

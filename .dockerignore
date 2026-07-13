@@ -1,0 +1,40 @@
+# Keep build context tiny
+.git
+.gitignore
+Dockerfile*
+docker-compose*
+*.md
+Makefile
+
+# Binaries / local runtime
+quick-server
+quick-server.exe
+quick
+quick.exe
+*.exe
+*.exe~
+
+# Data & deployed sites (mounted as volumes at run)
+data/
+sites/**
+!sites/.gitkeep
+uploads/**
+!uploads/.gitkeep
+*.db
+*.db-wal
+*.db-shm
+
+# Env / secrets
+.env
+.env.*
+
+# Tests / tooling (not needed to compile the server binary — but Go needs _test.go
+# only if packages import them; they compile as part of package only when testing.
+# Still exclude large fixtures if any.)
+**/*_test.go
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,10 +1,10 @@
 package main
 
 import (
+	_ "embed"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/dadyprojects/quick/config"
@@ -18,6 +18,14 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
+
+// Embedded for single-binary / scratch Docker (no loose files required).
+//
+//go:embed sdk.js
+var sdkJS []byte
+
+//go:embed web/index.html
+var webConsole []byte
 
 func main() {
 	cfg := config.Load()
@@ -86,8 +94,16 @@ func main() {
 	app.Get("/sdk.js", func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/javascript; charset=utf-8")
 		c.Set("Cache-Control", "public, max-age=3600")
-		return c.SendFile("./sdk.js")
+		return c.Send(sdkJS)
 	})
+
+	// Web console for browser deploy (upload zip / folder)
+	serveConsole := func(c *fiber.Ctx) error {
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		c.Set("Cache-Control", "no-cache")
+		return c.Send(webConsole)
+	}
+	app.Get("/console", serveConsole)
 
 	deployH := routes.NewDeployHandler(database, cfg)
 	deployLimiter := middleware.NewRateLimiter(cfg.DeployRateIP, time.Hour)
@@ -148,11 +164,15 @@ func main() {
 	serve := static.Serve(cfg.SitesDir)
 	app.Get("/s/:name", serve)
 	app.Get("/s/:name/*", serve)
+	// Apex dashboard (no subdomain) — browser deploy UI
+	app.Get("/", func(c *fiber.Ctx) error {
+		if c.Locals("site") != nil {
+			return serve(c)
+		}
+		return serveConsole(c)
+	})
 	app.Get("/*", func(c *fiber.Ctx) error {
 		if c.Locals("site") == nil {
-			if c.Path() == "/" {
-				return c.Type("html").SendString(apexHTML(cfg))
-			}
 			return c.Status(404).JSON(fiber.Map{"error": "not found"})
 		}
 		return serve(c)
@@ -166,18 +186,4 @@ func main() {
 	if err := app.Listen(addr); err != nil {
 		log.Fatalf("listen: %v", err)
 	}
-}
-
-func apexHTML(cfg *config.Config) string {
-	return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Quick</title>
-<style>body{font-family:system-ui;max-width:40rem;margin:4rem auto;padding:0 1rem;line-height:1.5}
-code{background:#f4f4f4;padding:.1em .3em;border-radius:3px}</style>
-</head><body>
-<h1>Quick</h1>
-<p>Zero-config backend for AI-generated HTML sites.</p>
-<p>Deploy with: <code>quick deploy ./my-site</code></p>
-<p>SDK: <code>&lt;script src="/sdk.js"&gt;&lt;/script&gt;</code></p>
-<p>Domain: <code>` + strings.ReplaceAll(cfg.BaseDomain, "`", "") + `</code></p>
-</body></html>`
 }

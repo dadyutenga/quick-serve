@@ -1,4 +1,4 @@
-.PHONY: build server cli test tidy run clean
+.PHONY: build server cli test tidy run clean docker docker-run linux fmt vet
 
 build: server cli
 
@@ -18,8 +18,15 @@ run: server
 	./quick-server
 
 linux:
-	GOOS=linux GOARCH=amd64 go build -o quick-server .
-	GOOS=linux GOARCH=amd64 go build -o quick ./cli
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o quick-server .
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o quick ./cli
+
+# Skinniest image (scratch + static binary + CA certs)
+docker:
+	docker build -t quick:slim .
+
+docker-run:
+	docker run --rm -p 8080:8080 -v quick-data:/data quick:slim
 
 clean:
 	rm -f quick-server quick quick-server.exe quick.exe

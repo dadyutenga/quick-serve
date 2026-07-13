@@ -47,6 +47,22 @@ set QUICK_SERVER=http://localhost:8080   # PowerShell: $env:QUICK_SERVER=...
 
 See `.env.example`.
 
+## Docker (skinniest image)
+
+Multi-stage build → **static binary + CA certs on `scratch`** (no OS, ~13MB).  
+`sdk.js` + deploy console are **embedded** in the binary.
+
+```bash
+# Install Docker Desktop first, then from quick/:
+docker build -t quick:slim .
+docker run --rm -p 8080:8080 -v quick-data:/data quick:slim
+
+# or
+docker compose up -d --build
+```
+
+Open http://localhost:8080/ — data/sites persist in the `quick-data` volume.
+
 ## HTML site example
 
 ```html

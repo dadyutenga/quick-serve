@@ -3,6 +3,7 @@ package static
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/dadyprojects/quick/db"
@@ -13,6 +14,10 @@ import (
 // and injects site_token into HTML responses.
 //
 // Token source: sites/<name>/.quick_site_token (mode 0600, never served) written at deploy time.
+//
+// Path-based hosting (/s/<name>/...): relative CSS/JS breaks when the browser URL lacks a
+// trailing slash (href="css/x" resolves to /s/css/x). We 301 to a trailing slash on the
+// site root and inject <base href="/s/<name>/"> plus rewrite root-absolute asset URLs.
 func Serve(sitesDir string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		siteVal := c.Locals("site")
@@ -21,10 +26,30 @@ func Serve(sitesDir string) fiber.Handler {
 		}
 		site := siteVal.(*db.Site)
 
-		reqPath := c.Path()
-		if strings.HasPrefix(reqPath, "/s/") {
-			parts := strings.SplitN(strings.TrimPrefix(reqPath, "/s/"), "/", 2)
-			if len(parts) == 2 {
+		fullReq := c.Path()
+		pathBase := "" // e.g. /s/my-site when using path routing
+		reqPath := fullReq
+
+		if strings.HasPrefix(fullReq, "/s/") {
+			rest := strings.TrimPrefix(fullReq, "/s/")
+			parts := strings.SplitN(rest, "/", 2)
+			if len(parts) >= 1 && parts[0] != "" {
+				pathBase = "/s/" + parts[0]
+			}
+			// Exact site root /s/name (no extra path). Fiber Path() usually has no trailing
+			// slash — force browser URL to /s/name/ so relative css/js/img resolve correctly.
+			// Without this, href="css/style.css" becomes /s/css/style.css → 404, unstyled page.
+			if pathBase != "" && (len(parts) == 1 || (len(parts) == 2 && parts[1] == "")) {
+				rawPath := string(c.Request().URI().Path())
+				if !strings.HasSuffix(rawPath, "/") {
+					loc := pathBase + "/"
+					if q := string(c.Request().URI().QueryString()); q != "" {
+						loc += "?" + q
+					}
+					return c.Redirect(loc, fiber.StatusMovedPermanently)
+				}
+				reqPath = "/"
+			} else if len(parts) == 2 {
 				reqPath = "/" + parts[1]
 			} else {
 				reqPath = "/"
@@ -81,13 +106,94 @@ func Serve(sitesDir string) fiber.Handler {
 				return c.Status(fiber.StatusInternalServerError).SendString("read error")
 			}
 			token := readSiteTokenFile(siteRoot)
-			html := injectToken(string(body), token)
+			html := string(body)
+			if pathBase != "" {
+				html = injectBase(html, pathBase+"/")
+				html = rewriteRootAbsoluteAssets(html, pathBase)
+			}
+			html = injectToken(html, token)
 			c.Type("html")
+			c.Set("Cache-Control", "no-cache")
 			return c.SendString(html)
+		}
+
+		// Ensure correct MIME for CSS/JS (some deploys look "unstyled" if type is wrong)
+		switch strings.ToLower(filepath.Ext(fullAbs)) {
+		case ".css":
+			c.Type("css")
+		case ".js", ".mjs":
+			c.Type("js")
+		case ".svg":
+			c.Type("svg")
+		case ".woff":
+			c.Set("Content-Type", "font/woff")
+		case ".woff2":
+			c.Set("Content-Type", "font/woff2")
 		}
 
 		return c.SendFile(fullAbs, false)
 	}
+}
+
+// injectBase adds <base href="..."> so relative css/js/img resolve under the site path prefix.
+func injectBase(html, baseHref string) string {
+	if baseHref == "" {
+		return html
+	}
+	lower := strings.ToLower(html)
+	if strings.Contains(lower, "<base") {
+		return html
+	}
+	tag := `<base href="` + baseHref + `">`
+	if i := strings.Index(lower, "<head>"); i >= 0 {
+		end := i + len("<head>")
+		return html[:end] + "\n" + tag + html[end:]
+	}
+	if i := strings.Index(lower, "<head "); i >= 0 {
+		if j := strings.Index(html[i:], ">"); j >= 0 {
+			end := i + j + 1
+			return html[:end] + "\n" + tag + html[end:]
+		}
+	}
+	return tag + html
+}
+
+// Root-absolute assets like href="/css/app.css" ignore <base>; rewrite them under /s/<name>.
+// Leave platform routes alone: /sdk.js, /api, /deploy, /s/, /health, /console, protocol-relative //.
+// (Go RE2 has no lookahead — filter reserved prefixes in the replace func.)
+var rootAbsAssetRe = regexp.MustCompile(`(?i)(\b(?:href|src|action)=)(["'])/([^"']*)`)
+
+func rewriteRootAbsoluteAssets(html, sitePrefix string) string {
+	if sitePrefix == "" {
+		return html
+	}
+	return rootAbsAssetRe.ReplaceAllStringFunc(html, func(m string) string {
+		sub := rootAbsAssetRe.FindStringSubmatch(m)
+		if len(sub) != 4 {
+			return m
+		}
+		attr, quote, path := sub[1], sub[2], sub[3]
+		lower := strings.ToLower(path)
+		switch {
+		case path == "" || strings.HasPrefix(path, "/"): // protocol-relative was // — path wouldn't include both
+			return m
+		case lower == "sdk.js" || strings.HasPrefix(lower, "sdk.js?"):
+			return m
+		case lower == "api" || strings.HasPrefix(lower, "api/"):
+			return m
+		case lower == "deploy" || strings.HasPrefix(lower, "deploy/"):
+			return m
+		case strings.HasPrefix(lower, "s/"):
+			return m
+		case lower == "health" || strings.HasPrefix(lower, "health/"):
+			return m
+		case lower == "console" || strings.HasPrefix(lower, "console/"):
+			return m
+		case lower == "sites" || strings.HasPrefix(lower, "sites/"):
+			return m
+		}
+		return attr + quote + sitePrefix + "/" + path + quote
+	})
 }
 
 // isQuickControlPath rejects .quick* basenames anywhere in the path.

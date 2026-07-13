@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Hello Quick</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quick Test Upload</title>
   <script src="/sdk.js"></script>
   <style>
     :root {
       --primary: #0d7a3f;
       --primary-hover: #0a6232;
-      --primary-active: #084d28;
       --primary-soft: #e8f5ee;
       --text: #111111;
       --bg: #ffffff;
@@ -21,70 +21,73 @@
       padding: 0 1rem;
       background: var(--bg);
       color: var(--text);
+      line-height: 1.5;
     }
-    h1, p, code, pre { color: var(--text); }
+    h1 { color: var(--text); margin-bottom: 0.25rem; }
+    p { color: var(--text); }
+    .card {
+      background: var(--primary-soft);
+      border: 1px solid var(--primary);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    button {
+      background: var(--primary);
+      color: var(--on-primary);
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      padding: 0.55rem 0.9rem;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 0.25rem 0.25rem 0.25rem 0;
+    }
+    button:hover { background: var(--primary-hover); }
+    pre {
+      background: #ffffff;
+      border: 1px solid var(--primary);
+      color: var(--text);
+      padding: 0.75rem;
+      overflow: auto;
+      border-radius: 8px;
+      min-height: 3rem;
+    }
     code {
       background: var(--primary-soft);
       border: 1px solid var(--primary);
       padding: 0.05em 0.3em;
       border-radius: 4px;
     }
-    button {
-      margin: 0.25rem 0.25rem 0.25rem 0;
-      background: var(--primary);
-      color: var(--on-primary);
-      border: 1px solid var(--primary);
-      border-radius: 8px;
-      padding: 0.5rem 0.85rem;
-      font: inherit;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    button:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: var(--on-primary); }
-    button:active { background: var(--primary-active); border-color: var(--primary-active); color: var(--on-primary); }
-    button:disabled { opacity: 0.55; cursor: not-allowed; }
-    pre {
-      background: var(--primary-soft);
-      border: 1px solid var(--primary);
-      color: var(--text);
-      padding: 0.75rem;
-      overflow: auto;
-    }
   </style>
 </head>
 <body>
-  <h1>Hello Quick</h1>
-  <p>Token injected: <code id="tok"></code></p>
-  <button id="save">Save visit</button>
-  <button id="load">Load visit</button>
-  <pre id="out"></pre>
+  <h1>Quick Test Upload</h1>
+  <p>This site was deployed from a test zip. Token: <code id="tok">…</code></p>
+  <div class="card">
+    <button id="save" type="button">Save visit</button>
+    <button id="load" type="button">Load visit</button>
+    <pre id="out">Click a button to test KV storage.</pre>
+  </div>
   <script>
     document.getElementById("tok").textContent =
-      (window.__QUICK_TOKEN__ || "").slice(0, 8) + "…";
-
+      (window.__QUICK_TOKEN__ || "").slice(0, 10) + "…";
     var out = document.getElementById("out");
     function log(x) {
       out.textContent = typeof x === "string" ? x : JSON.stringify(x, null, 2);
     }
-
     document.getElementById("save").onclick = async function () {
       try {
-        var cur = null;
-        try { cur = await quick.data.get("visits"); } catch (e) { cur = { value: { n: 0 } }; }
+        var cur = { value: { n: 0 } };
+        try { cur = await quick.data.get("visits"); } catch (e) {}
         var n = (cur && cur.value && cur.value.n) || 0;
-        await quick.data.set("visits", { n: n + 1, at: Date.now() });
+        await quick.data.set("visits", { n: n + 1, at: new Date().toISOString() });
         log(await quick.data.get("visits"));
-      } catch (e) {
-        log(String(e));
-      }
+      } catch (e) { log(String(e)); }
     };
-
     document.getElementById("load").onclick = async function () {
-      try {
-        log(await quick.data.get("visits"));
-      } catch (e) {
-        log(String(e));
-      }
+      try { log(await quick.data.get("visits")); }
+      catch (e) { log(String(e)); }
     };
   </script>
 </body>

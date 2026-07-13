@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quick — Deploy</title>
+  <style>
+    /* Palette: white + one primary green (#0d7a3f); text always near-black on light surfaces */
+    :root {
+      /* ONE primary action green; hovers are darker steps of the same hue */
+      --primary: #0d7a3f;
+      --primary-hover: #0a6232;
+      --primary-active: #084d28;
+      --primary-soft: #e8f5ee;
+      --primary-soft-mid: #d9f0e3;
+      --primary-soft-panel: #f0faf4;
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --panel2: var(--primary-soft-panel);
+      --border: var(--primary);
+      --text: #111111;
+      --muted: #111111;
+      --on-primary: #ffffff;
+      --warn: #111111;
+      --radius: 14px;
+      --shadow: 0 18px 50px rgba(13, 122, 63, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(13, 122, 63, 0.10), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(13, 122, 63, 0.08), transparent 50%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+    header p {
+      margin: .35rem 0 0;
+      color: var(--text);
+      max-width: 36rem;
+    }
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+    @media (min-width: 800px) {
+      .grid.two { grid-template-columns: 1.2fr .8fr; align-items: start; }
+    }
+    .card {
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
+    }
+    .card h2 {
+      margin: 0 0 .85rem;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    label {
+      display: block;
+      font-size: .85rem;
+      color: var(--text);
+      margin: .75rem 0 .35rem;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: .7rem .85rem;
+      font: inherit;
+      outline: none;
+    }
+    input::placeholder {
+      color: var(--text);
+      opacity: 0.7;
+    }
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(13, 122, 63, 0.20);
+    }
+    .drop {
+      margin-top: .85rem;
+      border: 1.5px dashed var(--border);
+      border-radius: 12px;
+      padding: 1.6rem 1rem;
+      text-align: center;
+      background: var(--primary-soft);
+      transition: border-color .15s, background .15s;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .drop:hover, .drop.drag {
+      border-color: var(--primary);
+      background: var(--primary-soft-mid);
+    }
+    .drop strong { display: block; margin-bottom: .25rem; color: var(--text); }
+    .drop span { color: var(--text); font-size: .9rem; }
+    .drop code {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: .05em .3em;
+      border-radius: 4px;
+    }
+    .file-name {
+      margin-top: .75rem;
+      font-size: .9rem;
+      color: var(--text);
+      word-break: break-all;
+      min-height: 1.25rem;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .6rem;
+      margin-top: 1rem;
+    }
+    button, .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      padding: .7rem 1rem;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .08s, opacity .15s, background .15s, border-color .15s, color .15s;
+    }
+    button:active { transform: translateY(1px); }
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: var(--on-primary);
+      border: 1px solid var(--primary);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      color: var(--on-primary);
+    }
+    .btn-primary:active:not(:disabled) {
+      background: var(--primary-active);
+      border-color: var(--primary-active);
+      color: var(--on-primary);
+    }
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+      color: var(--text);
+    }
+    .btn-secondary:active:not(:disabled) {
+      background: var(--primary-soft-mid);
+      color: var(--text);
+    }
+    .btn-danger {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--primary);
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: var(--primary);
+      color: var(--on-primary);
+      border-color: var(--primary);
+    }
+    .btn-danger:active:not(:disabled) {
+      background: var(--primary-hover);
+      color: var(--on-primary);
+    }
+    .hint {
+      margin-top: .85rem;
+      color: var(--text);
+      font-size: .85rem;
+    }
+    .hint code {
+      background: var(--primary-soft);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: .05em .3em;
+      border-radius: 4px;
+    }
+    .tabs {
+      display: flex;
+      gap: .4rem;
+      margin-bottom: .25rem;
+      background: var(--primary-soft);
+      padding: .3rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .tabs button {
+      flex: 1;
+      background: transparent;
+      color: var(--text);
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .tabs button:hover:not(.active) {
+      background: var(--bg);
+      color: var(--text);
+    }
+    .tabs button.active {
+      background: var(--primary);
+      color: var(--on-primary);
+      border-color: var(--primary);
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .result {
+      display: none;
+      margin-top: 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--primary-soft);
+      padding: 1rem;
+      color: var(--text);
+    }
+    .result.show { display: block; }
+    .result.error {
+      border-color: var(--primary);
+      background: var(--bg);
+      color: var(--text);
+    }
+    .result h3 { margin: 0 0 .5rem; font-size: 1rem; color: var(--text); }
+    .result p { color: var(--text); }
+    .token-box {
+      margin: .55rem 0;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .65rem .75rem;
+      color: var(--text);
+    }
+    .token-box .k {
+      font-size: .75rem;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .token-box .v {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .85rem;
+      word-break: break-all;
+      margin-top: .2rem;
+      color: var(--text);
+    }
+    .token-box .actions {
+      margin-top: .4rem;
+      display: flex;
+      gap: .4rem;
+    }
+    .token-box button {
+      font-size: .8rem;
+      padding: .35rem .6rem;
+      font-weight: 600;
+    }
+    .token-box a.btn-primary {
+      color: var(--on-primary);
+    }
+    .warn {
+      color: var(--text);
+      font-size: .88rem;
+      margin-top: .6rem;
+    }
+    .sites-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: .6rem;
+    }
+    .sites-list li {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem .85rem;
+      display: grid;
+      gap: .45rem;
+      color: var(--text);
+    }
+    .sites-list .name {
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      gap: .5rem;
+      align-items: center;
+      color: var(--text);
+    }
+    .sites-list a {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: .9rem;
+      word-break: break-all;
+    }
+    .sites-list a:hover {
+      color: var(--primary-hover);
+      text-decoration: underline;
+    }
+    .sites-list a:active {
+      color: var(--primary-active);
+    }
+    .empty {
+      color: var(--text);
+      font-size: .9rem;
+      margin: 0;
+    }
+    .status {
+      min-height: 1.2rem;
+      margin-top: .75rem;
+      font-size: .9rem;
+      color: var(--text);
+    }
+    footer {
+      margin-top: 2rem;
+      color: var(--text);
+      font-size: .85rem;
+      text-align: center;
+    }
+    footer code {
+      background: var(--primary-soft);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: .1em .35em;
+      border-radius: 4px;
+    }
+    a {
+      color: var(--primary);
+    }
+    a:hover {
+      color: var(--primary-hover);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Quick Deploy</h1>
+        <p>Upload your HTML site (folder or zip). Instant live URL, built-in data / files / AI / websockets — no backend setup.</p>
+      </div>
+    </header>
+
+    <div class="grid two">
+      <section class="card">
+        <div class="tabs" role="tablist">
+          <button type="button" class="active" data-tab="new">New site</button>
+          <button type="button" data-tab="redeploy">Redeploy</button>
+        </div>
+
+        <div id="panel-new" class="panel active">
+          <h2>Upload a new site</h2>
+          <label for="name">Site name (optional)</label>
+          <input id="name" type="text" placeholder="my-app — leave blank for random" autocomplete="off" spellcheck="false" />
+
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose files or folder">
+            <strong>Drop zip / files / folder here</strong>
+            <span>or click to choose · needs <code>index.html</code> at root</span>
+            <div class="file-name" id="fileLabel">No files selected</div>
+          </div>
+          <input id="fileZip" type="file" accept=".zip,application/zip" hidden />
+          <input id="fileDir" type="file" webkitdirectory directory multiple hidden />
+          <input id="fileMulti" type="file" multiple accept=".html,.css,.js,.json,.png,.jpg,.jpeg,.gif,.svg,.webp,.ico,.txt,.md,.woff,.woff2" hidden />
+
+          <div class="row">
+            <button type="button" class="btn-secondary" id="btnZip">Choose .zip</button>
+            <button type="button" class="btn-secondary" id="btnFolder">Choose folder</button>
+            <button type="button" class="btn-secondary" id="btnFiles">Choose files</button>
+            <button type="button" class="btn-primary" id="btnDeploy" disabled>Deploy</button>
+          </div>
+          <p class="hint">Max ~50MB. Folder/files are zipped in your browser before upload. Secrets (tokens) are shown once — save them.</p>
+        </div>
+
+        <div id="panel-redeploy" class="panel">
+          <h2>Redeploy existing site</h2>
+          <label for="reName">Site name</label>
+          <input id="reName" type="text" placeholder="my-app" autocomplete="off" spellcheck="false" />
+          <label for="ownerToken">Owner token</label>
+          <input id="ownerToken" type="password" placeholder="paste owner token" autocomplete="off" />
+
+          <div class="drop" id="dropRe" tabindex="0" role="button">
+            <strong>Drop new zip / files / folder</strong>
+            <span>replaces the live site files</span>
+            <div class="file-name" id="fileLabelRe">No files selected</div>
+          </div>
+
+          <div class="row">
+            <button type="button" class="btn-secondary" id="btnZipRe">Choose .zip</button>
+            <button type="button" class="btn-secondary" id="btnFolderRe">Choose folder</button>
+            <button type="button" class="btn-primary" id="btnRedeploy" disabled>Redeploy</button>
+          </div>
+        </div>
+
+        <div class="status" id="status"></div>
+        <div class="result" id="result"></div>
+      </section>
+
+      <section class="card">
+        <h2>Your sites (this browser)</h2>
+        <p class="hint" style="margin-top:0">Saved locally after deploy. Tokens stay on this device only.</p>
+        <ul class="sites-list" id="sitesList"></ul>
+        <p class="empty" id="sitesEmpty">No sites yet — deploy one on the left.</p>
+      </section>
+    </div>
+
+    <footer>
+      CLI still works: <code>quick deploy ./my-site</code> · SDK: <code>&lt;script src="/sdk.js"&gt;&lt;/script&gt;</code>
+    </footer>
+  </div>
+
+  <script>
+(function () {
+  const STORAGE_KEY = "quick_sites_v1";
+
+  const els = {
+    name: document.getElementById("name"),
+    reName: document.getElementById("reName"),
+    ownerToken: document.getElementById("ownerToken"),
+    drop: document.getElementById("drop"),
+    dropRe: document.getElementById("dropRe"),
+    fileZip: document.getElementById("fileZip"),
+    fileDir: document.getElementById("fileDir"),
+    fileMulti: document.getElementById("fileMulti"),
+    fileLabel: document.getElementById("fileLabel"),
+    fileLabelRe: document.getElementById("fileLabelRe"),
+    btnZip: document.getElementById("btnZip"),
+    btnFolder: document.getElementById("btnFolder"),
+    btnFiles: document.getElementById("btnFiles"),
+    btnDeploy: document.getElementById("btnDeploy"),
+    btnZipRe: document.getElementById("btnZipRe"),
+    btnFolderRe: document.getElementById("btnFolderRe"),
+    btnRedeploy: document.getElementById("btnRedeploy"),
+    status: document.getElementById("status"),
+    result: document.getElementById("result"),
+    sitesList: document.getElementById("sitesList"),
+    sitesEmpty: document.getElementById("sitesEmpty"),
+  };
+
+  let pending = null; // { mode: 'new'|'redeploy', kind: 'zip'|'files', zipFile?: File, files?: File[] }
+  let target = "new";
+
+  // Tabs
+  document.querySelectorAll(".tabs button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tabs button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      target = btn.dataset.tab;
+      document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+      document.getElementById("panel-" + target).classList.add("active");
+      clearResult();
+      updateButtons();
+    });
+  });
+
+  function setStatus(msg) {
+    els.status.textContent = msg || "";
+  }
+
+  function clearResult() {
+    els.result.className = "result";
+    els.result.innerHTML = "";
+  }
+
+  function showError(msg) {
+    els.result.className = "result show error";
+    els.result.innerHTML = "<h3>Deploy failed</h3><p>" + escapeHtml(msg) + "</p>";
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function updateButtons() {
+    if (target === "new") {
+      els.btnDeploy.disabled = !pending || pending.mode !== "new";
+    } else {
+      const ready =
+        pending &&
+        pending.mode === "redeploy" &&
+        els.reName.value.trim() &&
+        els.ownerToken.value.trim();
+      els.btnRedeploy.disabled = !ready;
+    }
+  }
+
+  els.reName.addEventListener("input", updateButtons);
+  els.ownerToken.addEventListener("input", updateButtons);
+
+  function labelFor(files, zipFile) {
+    if (zipFile) return zipFile.name + " (" + formatBytes(zipFile.size) + ")";
+    if (files && files.length) {
+      const hasIndex = files.some((f) => relPath(f).replace(/\\/g, "/").endsWith("index.html") || relPath(f) === "index.html");
+      return files.length + " file(s)" + (hasIndex ? " · index.html ✓" : " · missing index.html?");
+    }
+    return "No files selected";
+  }
+
+  function relPath(file) {
+    return file.webkitRelativePath || file.name;
+  }
+
+  function formatBytes(n) {
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+    return (n / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function setPending(mode, payload) {
+    pending = { mode, ...payload };
+    const label = labelFor(payload.files, payload.zipFile);
+    if (mode === "new") els.fileLabel.textContent = label;
+    else els.fileLabelRe.textContent = label;
+    updateButtons();
+  }
+
+  // Pickers
+  els.btnZip.addEventListener("click", () => {
+    target = "new";
+    els.fileZip.onchange = () => {
+      const f = els.fileZip.files && els.fileZip.files[0];
+      if (f) setPending("new", { kind: "zip", zipFile: f });
+      els.fileZip.value = "";
+    };
+    els.fileZip.click();
+  });
+  els.btnFolder.addEventListener("click", () => {
+    els.fileDir.onchange = () => {
+      const files = Array.from(els.fileDir.files || []);
+      if (files.length) setPending("new", { kind: "files", files });
+      els.fileDir.value = "";
+    };
+    els.fileDir.click();
+  });
+  els.btnFiles.addEventListener("click", () => {
+    els.fileMulti.onchange = () => {
+      const files = Array.from(els.fileMulti.files || []);
+      if (files.length) setPending("new", { kind: "files", files });
+      els.fileMulti.value = "";
+    };
+    els.fileMulti.click();
+  });
+
+  els.btnZipRe.addEventListener("click", () => {
+    els.fileZip.onchange = () => {
+      const f = els.fileZip.files && els.fileZip.files[0];
+      if (f) setPending("redeploy", { kind: "zip", zipFile: f });
+      els.fileZip.value = "";
+    };
+    els.fileZip.click();
+  });
+  els.btnFolderRe.addEventListener("click", () => {
+    els.fileDir.onchange = () => {
+      const files = Array.from(els.fileDir.files || []);
+      if (files.length) setPending("redeploy", { kind: "files", files });
+      els.fileDir.value = "";
+    };
+    els.fileDir.click();
+  });
+
+  // Drop zones
+  function wireDrop(el, mode) {
+    el.addEventListener("click", () => {
+      if (mode === "new") els.btnFolder.click();
+      else els.btnFolderRe.click();
+    });
+    el.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      el.classList.add("drag");
+    });
+    el.addEventListener("dragleave", () => el.classList.remove("drag"));
+    el.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      el.classList.remove("drag");
+      const items = e.dataTransfer && e.dataTransfer.items;
+      const files = [];
+      if (items && items.length) {
+        const tasks = [];
+        for (const item of items) {
+          if (item.kind === "file") {
+            const entry = item.webkitGetAsEntry && item.webkitGetAsEntry();
+            if (entry) tasks.push(walkEntry(entry, "", files));
+            else {
+              const f = item.getAsFile();
+              if (f) files.push(f);
+            }
+          }
+        }
+        await Promise.all(tasks);
+      } else {
+        Array.from((e.dataTransfer && e.dataTransfer.files) || []).forEach((f) => files.push(f));
+      }
+      if (!files.length) return;
+      if (files.length === 1 && /\.zip$/i.test(files[0].name)) {
+        setPending(mode, { kind: "zip", zipFile: files[0] });
+      } else {
+        setPending(mode, { kind: "files", files });
+      }
+    });
+  }
+  wireDrop(els.drop, "new");
+  wireDrop(els.dropRe, "redeploy");
+
+  function walkEntry(entry, path, out) {
+    return new Promise((resolve, reject) => {
+      if (entry.isFile) {
+        entry.file((file) => {
+          // Preserve relative path for zip root
+          Object.defineProperty(file, "webkitRelativePath", {
+            value: path + file.name,
+          });
+          out.push(file);
+          resolve();
+        }, reject);
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const readBatch = () => {
+          reader.readEntries(async (entries) => {
+            if (!entries.length) return resolve();
+            try {
+              await Promise.all(
+                entries.map((ent) => walkEntry(ent, path + entry.name + "/", out))
+              );
+              readBatch();
+            } catch (err) {
+              reject(err);
+            }
+          }, reject);
+        };
+        readBatch();
+      } else resolve();
+    });
+  }
+
+  // ---------- Minimal ZIP (store only, no compression) ----------
+  function crc32(buf) {
+    let c = ~0;
+    for (let i = 0; i < buf.length; i++) {
+      c ^= buf[i];
+      for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
+    }
+    return ~c >>> 0;
+  }
+
+  function u16(n) {
+    return new Uint8Array([n & 255, (n >>> 8) & 255]);
+  }
+  function u32(n) {
+    return new Uint8Array([n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]);
+  }
+  function concat(parts) {
+    const len = parts.reduce((a, b) => a + b.length, 0);
+    const out = new Uint8Array(len);
+    let o = 0;
+    for (const p of parts) {
+      out.set(p, o);
+      o += p.length;
+    }
+    return out;
+  }
+  function strBytes(s) {
+    return new TextEncoder().encode(s);
+  }
+
+  async function filesToZip(files) {
+    // Normalize paths: strip common top folder if all share one directory
+    let entries = files.map((f) => {
+      let p = (f.webkitRelativePath || f.name).replace(/\\/g, "/");
+      // remove leading ./ 
+      p = p.replace(/^\.\//, "");
+      return { path: p, file: f };
+    });
+
+    // If all paths share a single top-level folder, strip it so index.html is at root
+    const tops = new Set(
+      entries.map((e) => {
+        const i = e.path.indexOf("/");
+        return i === -1 ? "" : e.path.slice(0, i);
+      })
+    );
+    if (tops.size === 1) {
+      const only = [...tops][0];
+      if (only) {
+        entries = entries.map((e) => ({
+          path: e.path.startsWith(only + "/") ? e.path.slice(only.length + 1) : e.path,
+          file: e.file,
+        }));
+      }
+    }
+
+    // Drop empty path segments / junk
+    entries = entries.filter((e) => e.path && !e.path.endsWith("/"));
+
+    const hasIndex = entries.some((e) => e.path === "index.html");
+    if (!hasIndex) {
+      throw new Error("Folder must contain index.html at the site root");
+    }
+
+    const locals = [];
+    const centrals = [];
+    let offset = 0;
+
+    for (const { path, file } of entries) {
+      const nameBytes = strBytes(path);
+      const data = new Uint8Array(await file.arrayBuffer());
+      const crc = crc32(data);
+      const local = concat([
+        u32(0x04034b50),
+        u16(20),
+        u16(0),
+        u16(0),
+        u16(0),
+        u16(0),
+        u32(crc),
+        u32(data.length),
+        u32(data.length),
+        u16(nameBytes.length),
+        u16(0),
+        nameBytes,
+        data,
+      ]);
+      const central = concat([
+        u32(0x02014b50),
+        u16(20),
+        u16(20),
+        u16(0),
+        u16(0),
+        u16(0),
+        u16(0),
+        u32(crc),
+        u32(data.length),
+        u32(data.length),
+        u16(nameBytes.length),
+        u16(0),
+        u16(0),
+        u16(0),
+        u16(0),
+        u32(0),
+        u32(offset),
+        nameBytes,
+      ]);
+      locals.push(local);
+      centrals.push(central);
+      offset += local.length;
+    }
+
+    const centralDir = concat(centrals);
+    const end = concat([
+      u32(0x06054b50),
+      u16(0),
+      u16(0),
+      u16(entries.length),
+      u16(entries.length),
+      u32(centralDir.length),
+      u32(offset),
+      u16(0),
+    ]);
+    const zipBytes = concat([...locals, centralDir, end]);
+    return new Blob([zipBytes], { type: "application/zip" });
+  }
+
+  async function buildZipBlob() {
+    if (!pending) throw new Error("No files selected");
+    if (pending.kind === "zip") return pending.zipFile;
+    return filesToZip(pending.files);
+  }
+
+  async function deployNew() {
+    clearResult();
+    setStatus("Preparing upload…");
+    els.btnDeploy.disabled = true;
+    try {
+      const blob = await buildZipBlob();
+      const fd = new FormData();
+      const name = els.name.value.trim();
+      if (name) fd.append("name", name);
+      fd.append("file", blob, (name || "site") + ".zip");
+
+      setStatus("Uploading…");
+      const res = await fetch("/deploy", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Deploy failed (" + res.status + ")");
+
+      setStatus("Deployed ✓");
+      showSuccess(data, true);
+      saveSite(data);
+      renderSites();
+    } catch (err) {
+      setStatus("");
+      showError(err.message || String(err));
+    } finally {
+      updateButtons();
+    }
+  }
+
+  async function redeploy() {
+    clearResult();
+    setStatus("Preparing redeploy…");
+    els.btnRedeploy.disabled = true;
+    try {
+      const name = els.reName.value.trim().toLowerCase();
+      const token = els.ownerToken.value.trim();
+      if (!name || !token) throw new Error("Site name and owner token required");
+
+      const blob = await buildZipBlob();
+      const fd = new FormData();
+      fd.append("file", blob, name + ".zip");
+
+      setStatus("Uploading…");
+      const res = await fetch("/deploy/" + encodeURIComponent(name), {
+        method: "PUT",
+        headers: { "X-Quick-Token": token },
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Redeploy failed (" + res.status + ")");
+
+      setStatus("Redeployed ✓");
+      // merge tokens if re-issued
+      const existing = loadSites().find((s) => s.name === name);
+      const merged = {
+        name: data.name || name,
+        url: data.url || (location.origin + "/s/" + name + "/"),
+        owner_token: token,
+        site_token: data.site_token || (existing && existing.site_token) || "",
+        warning: data.warning || "",
+      };
+      showSuccess(merged, !!data.site_token);
+      saveSite(merged);
+      renderSites();
+    } catch (err) {
+      setStatus("");
+      showError(err.message || String(err));
+    } finally {
+      updateButtons();
+    }
+  }
+
+  function showSuccess(data, showTokens) {
+    const url = data.url || "";
+    let html = "<h3>Live ✓</h3>";
+    html +=
+      '<div class="token-box"><div class="k">URL</div><div class="v">' +
+      escapeHtml(url) +
+      '</div><div class="actions"><a class="btn btn-primary" style="text-decoration:none;display:inline-block" href="' +
+      escapeHtml(url) +
+      '" target="_blank" rel="noopener">Open site</a>' +
+      '<button type="button" class="btn-secondary" data-copy="' +
+      escapeHtml(url) +
+      '">Copy URL</button></div></div>';
+
+    if (showTokens && data.owner_token) {
+      html += tokenRow("Owner token (deploy / delete)", data.owner_token);
+    }
+    if (showTokens && data.site_token) {
+      html += tokenRow("Site token (public, embedded in HTML)", data.site_token);
+    }
+    if (data.warning) {
+      html += '<p class="warn">' + escapeHtml(data.warning) + "</p>";
+    }
+    els.result.className = "result show";
+    els.result.innerHTML = html;
+    els.result.querySelectorAll("[data-copy]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(btn.getAttribute("data-copy"));
+          btn.textContent = "Copied";
+          setTimeout(() => (btn.textContent = btn.dataset.label || "Copy"), 1200);
+        } catch (_) {}
+      });
+      btn.dataset.label = btn.textContent;
+    });
+  }
+
+  function tokenRow(label, value) {
+    return (
+      '<div class="token-box"><div class="k">' +
+      escapeHtml(label) +
+      '</div><div class="v">' +
+      escapeHtml(value) +
+      '</div><div class="actions"><button type="button" class="btn-secondary" data-copy="' +
+      escapeHtml(value) +
+      '">Copy</button></div></div>'
+    );
+  }
+
+  function loadSites() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function saveSite(data) {
+    const list = loadSites().filter((s) => s.name !== data.name);
+    list.unshift({
+      name: data.name,
+      url: data.url,
+      owner_token: data.owner_token || "",
+      site_token: data.site_token || "",
+      saved_at: Date.now(),
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 50)));
+  }
+
+  function removeSite(name) {
+    const list = loadSites().filter((s) => s.name !== name);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    renderSites();
+  }
+
+  async function deleteSite(name, ownerToken) {
+    if (!confirm("Delete site “" + name + "”? This cannot be undone.")) return;
+    setStatus("Deleting…");
+    try {
+      const res = await fetch("/sites/" + encodeURIComponent(name), {
+        method: "DELETE",
+        headers: { "X-Quick-Token": ownerToken },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Delete failed");
+      removeSite(name);
+      setStatus("Deleted " + name);
+    } catch (err) {
+      showError(err.message || String(err));
+      setStatus("");
+    }
+  }
+
+  function renderSites() {
+    const list = loadSites();
+    els.sitesList.innerHTML = "";
+    els.sitesEmpty.style.display = list.length ? "none" : "block";
+    list.forEach((s) => {
+      const li = document.createElement("li");
+      li.innerHTML =
+        '<div class="name"><span>' +
+        escapeHtml(s.name) +
+        '</span></div><a href="' +
+        escapeHtml(s.url) +
+        '" target="_blank" rel="noopener">' +
+        escapeHtml(s.url) +
+        "</a>" +
+        '<div class="row">' +
+        '<button type="button" class="btn-secondary btn-open">Open</button>' +
+        '<button type="button" class="btn-secondary btn-re">Redeploy</button>' +
+        '<button type="button" class="btn-danger btn-del">Delete</button>' +
+        "</div>";
+      li.querySelector(".btn-open").onclick = () => window.open(s.url, "_blank");
+      li.querySelector(".btn-re").onclick = () => {
+        document.querySelector('.tabs button[data-tab="redeploy"]').click();
+        els.reName.value = s.name;
+        els.ownerToken.value = s.owner_token || "";
+        updateButtons();
+      };
+      li.querySelector(".btn-del").onclick = () => deleteSite(s.name, s.owner_token);
+      els.sitesList.appendChild(li);
+    });
+  }
+
+  els.btnDeploy.addEventListener("click", deployNew);
+  els.btnRedeploy.addEventListener("click", redeploy);
+
+  renderSites();
+})();
+  </script>
+</body>
+</html>
