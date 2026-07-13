@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Hello Quick</title>
+  <script src="/sdk.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 36rem; margin: 3rem auto; padding: 0 1rem; }
+    button { margin: 0.25rem 0.25rem 0.25rem 0; }
+    pre { background: #f4f4f4; padding: 0.75rem; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Hello Quick</h1>
+  <p>Token injected: <code id="tok"></code></p>
+  <button id="save">Save visit</button>
+  <button id="load">Load visit</button>
+  <pre id="out"></pre>
+  <script>
+    document.getElementById("tok").textContent =
+      (window.__QUICK_TOKEN__ || "").slice(0, 8) + "…";
+
+    var out = document.getElementById("out");
+    function log(x) {
+      out.textContent = typeof x === "string" ? x : JSON.stringify(x, null, 2);
+    }
+
+    document.getElementById("save").onclick = async function () {
+      try {
+        var cur = null;
+        try { cur = await quick.data.get("visits"); } catch (e) { cur = { value: { n: 0 } }; }
+        var n = (cur && cur.value && cur.value.n) || 0;
+        await quick.data.set("visits", { n: n + 1, at: Date.now() });
+        log(await quick.data.get("visits"));
+      } catch (e) {
+        log(String(e));
+      }
+    };
+
+    document.getElementById("load").onclick = async function () {
+      try {
+        log(await quick.data.get("visits"));
+      } catch (e) {
+        log(String(e));
+      }
+    };
+  </script>
+</body>
+</html>

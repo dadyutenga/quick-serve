@@ -1,0 +1,32 @@
+# Runtime data
+sites/*
+!sites/.gitkeep
+uploads/*
+!uploads/.gitkeep
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Binaries
+quick-server
+quick-server.exe
+quick
+quick.exe
+/cli/cli
+/cli/cli.exe
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Go
+vendor/

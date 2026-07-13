@@ -1,0 +1,28 @@
+[Unit]
+Description=Quick Clone backend
+After=network.target
+
+[Service]
+Type=simple
+User=quick
+Group=quick
+WorkingDirectory=/opt/quick
+ExecStart=/opt/quick/quick-server
+Restart=on-failure
+RestartSec=3
+Environment=QUICK_ENV=production
+Environment=QUICK_PORT=8080
+Environment=QUICK_DB_PATH=/opt/quick/data/quick.db
+Environment=QUICK_SITES_DIR=/opt/quick/sites
+Environment=QUICK_UPLOADS_DIR=/opt/quick/uploads
+Environment=QUICK_BASE_DOMAIN=quick.dadyprojects.tech
+Environment=QUICK_TRUST_PROXY=1
+EnvironmentFile=-/opt/quick/.env
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/quick/data /opt/quick/sites /opt/quick/uploads
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

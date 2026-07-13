@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS kv (
+    site_id    INTEGER NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+    key        TEXT NOT NULL,
+    value      TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (site_id, key)
+);
